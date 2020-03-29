@@ -1,0 +1,42 @@
+{
+  "name": "ts-boiler-plate",
+  "version": "1.0.0",
+  "description": "Express TypeScript Boiler Plate",
+  "main": "index.js",
+  "scripts": {
+    "start": "node -r ts-node/register ./src/server.ts",
+    "start:watch": "nodemon",
+    "build": "tsc -p ."
+  },
+  "author": "Laurence Jelo Asucro",
+  "license": "ISC",
+  "dependencies": {
+    "@types/express": "^4.17.3",
+    "express": "^4.17.1",
+    "pug": "^2.0.4",
+    "reflect-metadata": "^0.1.13",
+    "typedi": "^0.8.0",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "@types/node": "^13.9.5",
+    "eslint": "^6.8.0",
+    "eslint-plugin-import": "^2.20.1",
+    "nodemon": "^2.0.2",
+    "ts-node": "^8.8.1",
+    "typescript": "^3.8.3"
+  },
+  "nodemonConfig": {
+    "ignore": [
+      "**/*.test.ts",
+      "**/*.spec.ts",
+      ".git",
+      "node_modules"
+    ],
+    "watch": [
+      "src"
+    ],
+    "exec": "npm start",
+    "ext": "ts"
+  }
+}
