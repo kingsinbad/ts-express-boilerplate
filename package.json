@@ -1,7 +1,7 @@
 {
   "name": "ts-boiler-plate",
   "version": "1.0.0",
-  "description": "Express TypeScript Boiler Plate",
+  "description": "Express TypeScript Boilerplate",
   "main": "index.js",
   "scripts": {
     "start": "node -r ts-node/register ./src/server.ts",
