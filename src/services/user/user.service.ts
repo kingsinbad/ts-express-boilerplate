@@ -9,7 +9,7 @@ class UserService {
     /**
      * Get All Users
      * @returns {Array} List of Users
-     *  */ 
+     */ 
     getAll = async (): Promise<UserInterface[]> => {
         const users = [
             {
