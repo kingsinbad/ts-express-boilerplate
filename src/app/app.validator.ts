@@ -42,6 +42,21 @@ export default function(req: Request, parameters: any[]) {
                 req.body[param.name] = param.default;
             }
         }
+
+        const serializePath = (param: any, req: Request): void => {
+            if (param.required === true) {
+                if (!req.params[param.name]) {
+                    issues.push({
+                        name: param.name,
+                        type: 'params',
+                        required: true,
+                        message: `Routee params "${param.name}" is required.`
+                    })
+                }
+            } else if (param.default) {
+                req.params[param.name] = param.default;
+            }
+        }
     
         for (const param of parameters) {
             switch(param.in) {
@@ -49,7 +64,10 @@ export default function(req: Request, parameters: any[]) {
                     serializeQuery(param, req);
                     break;
                 case 'body':
-                    serializeBody(param, req)
+                    serializeBody(param, req);
+                    break;
+                case 'path':
+                    serializePath(param, req);
                     break;
                 default:
                     break;

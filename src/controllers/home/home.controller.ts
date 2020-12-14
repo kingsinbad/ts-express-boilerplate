@@ -1,7 +1,7 @@
 import { Request, Response } from 'express';
 import { Inject } from 'typedi';
 
-import { ApiController, Get } from '../decorators';
+import { ApiController, Get, Post } from '../decorators';
 import Logger from '../../utils/logger/logger.util';
 
 import * as ControllerConfig from './home.config';
@@ -20,6 +20,24 @@ class HomeController {
             message: 'Hello Home!'
         });
     }
+
+    @Post('/', ControllerConfig.store())
+    store = (req: Request, res: Response) => {
+        this.logger.log('info', 'HomeCntrl', 'Bombanatics');
+        res.json({
+            ...req.body
+        });
+    }
+
+    @Get('/item/:itemId', ControllerConfig.get())
+    get = (req: Request, res: Response) => {
+        this.logger.log('info', 'HomeCntrl', 'Item!');
+        res.json({
+            itemId: req.params.itemId,
+            ...req.query
+        });
+    }
+
 }
 
 
