@@ -1,79 +1,127 @@
 import { Request } from 'express';
 
+const serializables = [
+    'query',
+    'params'
+];
 
+const typeMap = {
+    path: 'params',
+    body: 'body',
+    query: 'query'
+};
+
+const typeSerializer = (param: any): { type: string, value: any }[] => {
+    const booleans = ['true', '1', 'false', '0'];
+    const lowerCaseParam = String(param).toLowerCase();
+    const types = [];
+
+    const numberValue = Number(param);
+    if (!isNaN(numberValue)) {
+        types.push({
+            type: 'number',
+            value: numberValue
+        });
+    }
+    
+    if (booleans.includes(lowerCaseParam)) {
+        const booleanValue = (lowerCaseParam === booleans[0] || lowerCaseParam === booleans[1]);
+        types.push({
+            type: 'boolean',
+            value: booleanValue
+        });
+    }
+
+    if (param !== undefined) {
+        types.push({
+            type: 'string',
+            value: String(param)
+        });
+    }
+
+    return types;
+};
+
+const serializer = (options: any) => {
+    const {
+        type,
+        param,
+        req
+    } = options;
+    const baseMessage = `Parameter [${param.name}] in ${param.in}`;
+    const serializeType = serializables.includes(type);
+
+    return {
+        get req() {
+            return req;
+        },
+        execute() {
+            const issue = {
+                name: param.name,
+                type,
+                required: true,
+                message: ''
+            };
+            let requestParam = req[type][param.name];
+            let serializedParam: any;
+
+            if (serializeType) {
+                const types = typeSerializer(requestParam);
+                serializedParam = types.find(paramMeta => paramMeta.type === param.type);
+                if (serializedParam) {
+                    requestParam = serializedParam.value;
+                }
+            }
+            if (param.required === true) {
+                if (requestParam === undefined) {
+                    issue.message = `${baseMessage} is required.`
+                    return issue;
+                } else if (param.type !== undefined && typeof requestParam !== param.type)  {
+                    issue.message = `${baseMessage} needs to be ${param.type}.`
+                    return issue;
+                }
+            } else if (param.default !== undefined) {
+                if (requestParam === undefined || (serializeType && !serializedParam)) {
+                    requestParam = param.default;
+                } else {
+                    requestParam = serializedParam ? serializedParam.value : param.default;
+                }
+                
+            }
+
+            // Reassign value to request parameter
+            req[type][param.name] = requestParam;
+
+            return;
+        }
+    }
+}
 
 export default function(req: Request, parameters: any[]) {    
     const issues = [];
 
-    if (parameters.length) {
-        const serializeQuery = (param: any, req: Request): void => {
-            if (param.required === true) {
-                if (!req.query[param.name]) {
-                    issues.push({
-                        name: param.name,
-                        type: 'query',
-                        required: true,
-                        message: `Query parameter "${param.name}" is required.`
-                    })
-                }
-            } else if (param.default) {
-                req.query[param.name] = param.default;
-            }
-        }
-
-        const serializeBody = (param: any, req: Request): void => {
-            if (param.required === true) {
-                if (req.body[param.name] === undefined) {
-                    issues.push({
-                        name: param.name,
-                        type: 'body',
-                        required: true,
-                        message: `Body parameter "${param.name}" is required.`
+    return {
+        get issues() {
+            return issues;
+        },
+        validate() {
+            if (parameters.length) {
+                for (const param of parameters) {
+                    const paramSerializer = serializer({
+                        type: typeMap[param.in],
+                        param,
+                        req
                     });
-                } else if (typeof req.body[param.name] !== param.type) {
-                    issues.push({
-                        name: param.name,
-                        type: 'body',
-                        required: true,
-                        message: `Body parameter "${param.name}" needs to be ${param.type}`
-                    });
+                    
+                    const issue = paramSerializer.execute();
+                    if (issue) {
+                        issues.push(issue);
+                    }
+                    req = paramSerializer.req;
                 }
-            } else if (param.default) {
-                req.body[param.name] = param.default;
             }
-        }
 
-        const serializePath = (param: any, req: Request): void => {
-            if (param.required === true) {
-                if (!req.params[param.name]) {
-                    issues.push({
-                        name: param.name,
-                        type: 'params',
-                        required: true,
-                        message: `Routee params "${param.name}" is required.`
-                    })
-                }
-            } else if (param.default) {
-                req.params[param.name] = param.default;
-            }
-        }
-    
-        for (const param of parameters) {
-            switch(param.in) {
-                case 'query': 
-                    serializeQuery(param, req);
-                    break;
-                case 'body':
-                    serializeBody(param, req);
-                    break;
-                case 'path':
-                    serializePath(param, req);
-                    break;
-                default:
-                    break;
-            }
+            return issues;
         }
     }
-    
-    return issues;
 }

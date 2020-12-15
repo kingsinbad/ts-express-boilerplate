@@ -73,11 +73,27 @@ export const get = () => {
         name: 'itemId',
         description: 'Item ID',
         required: true,
-        type: 'integer'
+        type: 'number'
+    });
+    const verifyQuery = new Query({
+        name: 'verify',
+        description: 'Verify Flag',
+        required: true,
+        type: 'boolean'
+    });
+    const notRequiredQuery = new Query({
+        name: 'notRequired',
+        description: 'NotRequired Flag',
+        required: false,
+        type: 'boolean',
+        default: true
     });
 
+
     const parameters = [
-        itemIdQuery
+        itemIdQuery,
+        verifyQuery,
+        notRequiredQuery
     ];
 
     const description = 'Get item';

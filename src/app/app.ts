@@ -35,9 +35,6 @@ class App {
         });
     }
 
-   
-
-
     private assets() {
         this.app.use(express.static('public'));
         this.app.use(express.static('views'));
@@ -72,7 +69,7 @@ class App {
     private validatorMiddleware(parameters: any[]) {
         return function(req: express.Request, res: express.Response, next: express.NextFunction) {
             if (parameters.length) {
-                const issues = Validator(req, parameters);
+                const issues = Validator(req, parameters).validate();
                 if (issues.length) {
                     return res.status(400).json({
                         code: 400406,
