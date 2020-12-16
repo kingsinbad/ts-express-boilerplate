@@ -4,16 +4,17 @@ import { Inject } from 'typedi';
 import { ApiController, Get, Post } from '../decorators';
 import Logger from '../../utils/logger/logger.util';
 
-import * as ControllerConfig from './home.config';
+import * as controllerConfig from './home.config';
 
 
-@ApiController('/')
+@ApiController('/', controllerConfig)
 class HomeController {
 
     @Inject()
     private logger: Logger;
 
-    @Get('/', ControllerConfig.index())
+
+    @Get('/')
     index = (req: Request, res: Response) => {
         this.logger.log('info', 'HomeCntrl', 'Take me home, country roads!');
         res.json({
@@ -21,7 +22,7 @@ class HomeController {
         });
     }
 
-    @Post('/', ControllerConfig.store())
+    @Post('/item')
     store = (req: Request, res: Response) => {
         this.logger.log('info', 'HomeCntrl', 'Bombanatics');
         res.json({
@@ -29,7 +30,7 @@ class HomeController {
         });
     }
 
-    @Get('/item/:itemId', ControllerConfig.get())
+    @Get('/item/:itemId')
     get = (req: Request, res: Response) => {
         this.logger.log('info', 'HomeCntrl', 'Item!');
         res.json({

@@ -2,7 +2,7 @@ import * as express from 'express';
 import { Container, Inject, Service } from 'typedi';
 
 import { AppConfigInterface } from './app.interface';
-import Validator from './app.validator';
+import Validator from '../validator';
 import Logger from '../utils/logger/logger.util';
 
 import { routes } from '../controllers/decorators';
@@ -23,10 +23,9 @@ class App {
 
         this.config = Container.get<any>('config').app;
         this.middlewares = Container.get('middlewares');
+        this.assets();
+        this.template();
         this.registerRoutes();
-
-        this.assets()
-        this.template()
     }
 
     set middlewares(middlewares: [any]) {
@@ -45,11 +44,13 @@ class App {
             const router = express.Router();
             const controller = Container.get(name);
             const config = routes[name];
-
+            const routeConfig = routes[name].config;
+            
             for (const route of config.paths) {
+                const { parameters=[] } = routeConfig[route.callback] ? routeConfig[route.callback]() : {};
                 router[route.method](
                     route.path, 
-                    this.validatorMiddleware(route.parameters || []), 
+                    this.validatorMiddleware(parameters), 
                     function(req: express.Request, res: express.Response, next: express.NextFunction
                 ) { 
                     controller[route.callback](req, res, next); 
@@ -60,6 +61,7 @@ class App {
         }
 
         this.app.use(this.config.basePath, this.router);
+        this.app.use(this.errorHandler());
     }
 
     private template() {
@@ -67,21 +69,39 @@ class App {
     }
 
     private validatorMiddleware(parameters: any[]) {
+        parameters = parameters.map((parameter: any) => parameter.value)
+
         return function(req: express.Request, res: express.Response, next: express.NextFunction) {
-            if (parameters.length) {
-                const issues = Validator(req, parameters).validate();
-                if (issues.length) {
+            Validator(req, parameters)
+                .validate()
+                .then((serializedRequest: any) => {
+                    req = serializedRequest;
+                    next();
+                })
+                .catch((issues: any[]) => {
                     return res.status(400).json({
                         code: 400406,
                         name: 'Bad Request',
                         issues
                     });
-                } 
-            }
-            next();
+                })
         }
     }
     
+    private errorHandler() {
+        return function(error: Error, req: express.Request, res: express.Response, next: express.NextFunction) {
+            return res.status(500).json({
+                code: 500503,
+                name: 'Internal Server Error',
+                issues: [
+                    {
+                        error: error.message || 'lol'
+                    }
+                ]
+            });
+        }
+    }
+
     public listen() {
         this.app.listen(this.config.port, () => {
             this.logger.log('info', 'App Started', `http://localhost:${this.config.port}`);

@@ -6,47 +6,47 @@ const getRoute = function(constructor: Function): any {
     return routes[constructor.name];
 }
 
-const setCallback = function(constructor: Function, method: string, path: string, key: string, config: any) {
+const setCallback = function(constructor: Function, method: string, path: string, key: string) {
     const route = getRoute(constructor);
-    const { parameters=[], description='' } = config;
     route.paths.push({
         path,
         method,
-        description,
-        parameters: parameters.map((param: any) => param.value),
+        description: '',
+        parameters: [],
         callback: key
     });
 }
 
-export const ApiController = function(basePath: string): Function {
+export const ApiController = function(basePath: string, config={}): Function {
     return function(constructor: Function) {
         const route = getRoute(constructor);
         route.basePath = basePath;
+        route.config = config;
     }
 }
 
-export const Get = function(path: string, config={}): Function {
+export const Get = function(path: string): Function {
     return function (target: any, key: string): void {
-        setCallback(target.constructor, 'get', path, key, config);
+        setCallback(target.constructor, 'get', path, key);
     }
 }
 
-export const Post = function(path: string, config={}): Function {
+export const Post = function(path: string): Function {
     return function (target: Function, key: string): void {
-        setCallback(target.constructor, 'post', path, key, config);
+        setCallback(target.constructor, 'post', path, key);
     }
 }
 
 
-export const Put = function(path: string, config={}): Function {
+export const Put = function(path: string): Function {
     return function (target: Function, key: string): void {
-        setCallback(target.constructor, 'put', path, key, config);
+        setCallback(target.constructor, 'put', path, key);
     }
 }
 
-export const Delete = function(path: string, config={}): Function {
+export const Delete = function(path: string): Function {
     return function (target: Function, key: string): void {
-        setCallback(target.constructor, 'delete', path, key, config);
+        setCallback(target.constructor, 'delete', path, key);
     }
 }
 

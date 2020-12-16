@@ -53,10 +53,18 @@ export const store = () => {
         default: 'Bombaya'
     });
 
+    const booleanBody = new Body({
+        name: 'bool',
+        description: 'Sample boolean',
+        required: true,
+        type: 'boolean'
+    });
+
 
     const parameters = [
         sampleBody,
-        defaultBody
+        defaultBody,
+        booleanBody
     ];
 
     const description = 'Hello Store!!'
@@ -69,7 +77,7 @@ export const store = () => {
 
 
 export const get = () => {
-    const itemIdQuery = new Path({
+    const itemIdPath = new Path({
         name: 'itemId',
         description: 'Item ID',
         required: true,
@@ -88,12 +96,18 @@ export const get = () => {
         type: 'boolean',
         default: true
     });
-
+    const stringQuery = new Query({
+        name: 'stringValue',
+        description: 'Sample String',
+        required: true,
+        type: 'string'
+    });
 
     const parameters = [
-        itemIdQuery,
+        itemIdPath,
         verifyQuery,
-        notRequiredQuery
+        notRequiredQuery,
+        stringQuery
     ];
 
     const description = 'Get item';

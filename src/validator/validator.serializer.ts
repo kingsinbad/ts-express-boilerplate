@@ -1,18 +1,8 @@
-import { Request } from 'express';
+import { SerializedInterface } from './validator.interface';
+import { SERIALIZABLES, TYPE_MAP, BOOLEANS } from './validator.map';
 
-const serializables = [
-    'query',
-    'params'
-];
 
-const typeMap = {
-    path: 'params',
-    body: 'body',
-    query: 'query'
-};
-
-const typeSerializer = (param: any): { type: string, value: any }[] => {
-    const booleans = ['true', '1', 'false', '0'];
+const typeSerializer = (param: any): SerializedInterface[] => {
     const lowerCaseParam = String(param).toLowerCase();
     const types = [];
 
@@ -24,8 +14,8 @@ const typeSerializer = (param: any): { type: string, value: any }[] => {
         });
     }
     
-    if (booleans.includes(lowerCaseParam)) {
-        const booleanValue = (lowerCaseParam === booleans[0] || lowerCaseParam === booleans[1]);
+    if (BOOLEANS.includes(lowerCaseParam)) {
+        const booleanValue = (lowerCaseParam === BOOLEANS[0] || lowerCaseParam === BOOLEANS[1]);
         types.push({
             type: 'boolean',
             value: booleanValue
@@ -42,14 +32,14 @@ const typeSerializer = (param: any): { type: string, value: any }[] => {
     return types;
 };
 
-const serializer = (options: any) => {
+export default (options: any) => {
     const {
-        type,
         param,
         req
     } = options;
     const baseMessage = `Parameter [${param.name}] in ${param.in}`;
-    const serializeType = serializables.includes(type);
+    const type = TYPE_MAP[param.in];
+    const serializeType = SERIALIZABLES.includes(type);
 
     return {
         get req() {
@@ -88,40 +78,10 @@ const serializer = (options: any) => {
                 }
                 
             }
-
             // Reassign value to request parameter
             req[type][param.name] = requestParam;
 
             return;
-        }
-    }
-}
-
-export default function(req: Request, parameters: any[]) {    
-    const issues = [];
-
-    return {
-        get issues() {
-            return issues;
-        },
-        validate() {
-            if (parameters.length) {
-                for (const param of parameters) {
-                    const paramSerializer = serializer({
-                        type: typeMap[param.in],
-                        param,
-                        req
-                    });
-                    
-                    const issue = paramSerializer.execute();
-                    if (issue) {
-                        issues.push(issue);
-                    }
-                    req = paramSerializer.req;
-                }
-            }
-
-            return issues;
         }
     }
 }
