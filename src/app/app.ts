@@ -13,6 +13,7 @@ class App {
     public app: express.Application;
     private config: AppConfigInterface;
     private router: express.Router;
+    private namedMiddlewares: any;
     
     @Inject()
     private logger: Logger; 
@@ -22,13 +23,15 @@ class App {
         this.router = express.Router();
 
         this.config = Container.get<any>('config').app;
-        this.middlewares = Container.get('middlewares');
+        this.defaultMiddlewares = Container.get('defaultMiddlewares');
+        this.namedMiddlewares = Container.get('namedMiddlewares');
+        
         this.assets();
         this.template();
         this.registerRoutes();
     }
 
-    set middlewares(middlewares: [any]) {
+    set defaultMiddlewares(middlewares: [any]) {
         middlewares.forEach(middleware => {
             this.app.use(middleware);
         });
@@ -37,6 +40,21 @@ class App {
     private assets() {
         this.app.use(express.static('public'));
         this.app.use(express.static('views'));
+    }
+
+    private getRouteMiddlewares(routeMiddlewares: string[]): Function[] {
+        let middlewares = routeMiddlewares.map((middlewareName) => {
+            const middleware = this.namedMiddlewares[middlewareName];
+            return middleware ? middleware.handler : middleware;
+        });
+
+        middlewares = middlewares.filter((middleware) => typeof middleware === 'function');
+        
+        return middlewares.map((middleware) => {
+            return function(req: express.Request, res: express.Response, next: express.NextFunction) {
+                return middleware(req, res, next);
+            }
+        });
     }
 
     private registerRoutes() {
@@ -48,8 +66,10 @@ class App {
             
             for (const route of config.paths) {
                 const { parameters=[] } = routeConfig[route.callback] ? routeConfig[route.callback]() : {};
+                const routeMiddlewares = this.getRouteMiddlewares(route.middlewares);
                 router[route.method](
                     route.path, 
+                    ...routeMiddlewares,
                     this.validatorMiddleware(parameters), 
                     function(req: express.Request, res: express.Response, next: express.NextFunction
                 ) { 

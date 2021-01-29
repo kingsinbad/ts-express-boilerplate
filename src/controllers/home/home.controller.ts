@@ -22,11 +22,12 @@ class HomeController {
         });
     }
 
-    @Post('/item')
-    store = (req: Request, res: Response) => {
+    @Post('/item', ['auth'])
+    store = (req: any, res: Response) => {
         this.logger.log('info', 'HomeCntrl', 'Bombanatics');
         res.json({
-            ...req.body
+            ...req.body,
+            user: req.user
         });
     }
 
